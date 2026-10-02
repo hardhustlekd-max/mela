@@ -1,0 +1,5 @@
+-keep class com.mela.ussdrunner.** { *; }
+-keep class androidx.glance.** { *; }
+-dontwarn androidx.glance.**
+-keep class * extends androidx.room.RoomDatabase
+-keep class androidx.room.** { *; }
