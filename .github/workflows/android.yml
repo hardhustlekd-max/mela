@@ -37,18 +37,22 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Decode release keystore
-        if: ${{ github.event_name != 'pull_request' && secrets.KEYSTORE_BASE64 != '' }}
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.jks
-
       - name: Assemble signed release APK
-        if: ${{ github.event_name != 'pull_request' && secrets.KEYSTORE_BASE64 != '' }}
+        if: github.event_name != 'pull_request'
         env:
-          KEYSTORE_FILE: app/release.jks
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No KEYSTORE_BASE64 secret; skipping signed release APK"
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > app/release.jks
+          export KEYSTORE_FILE="$GITHUB_WORKSPACE/app/release.jks"
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          rm -f app/release.jks
 
       - name: Collect APKs
         run: |
