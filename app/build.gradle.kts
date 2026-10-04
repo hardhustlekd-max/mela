@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -25,7 +27,7 @@ android {
         val keyAliasEnv = System.getenv("KEY_ALIAS")
         val keyPasswordEnv = System.getenv("KEY_PASSWORD")
         val localPropsFile = rootProject.file("keystore.properties")
-        val localProps = java.util.Properties()
+        val localProps = Properties()
         if (localPropsFile.exists()) {
             localPropsFile.inputStream().use { localProps.load(it) }
         }
