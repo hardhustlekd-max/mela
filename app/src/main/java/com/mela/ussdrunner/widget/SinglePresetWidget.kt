@@ -8,26 +8,22 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
-import androidx.glance.ImageProvider
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
-import androidx.glance.layout.padding
 import androidx.glance.layout.width
-import androidx.glance.action.clickable
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import com.mela.ussdrunner.MelaApplication
 import com.mela.ussdrunner.R
 import com.mela.ussdrunner.domain.model.Preset
@@ -44,64 +40,35 @@ class SinglePresetWidget : GlanceAppWidget() {
         provideContent {
             val prefs = currentState<Preferences>()
             val preset = prefs[WidgetKeys.presetId]?.let { presets[it] }
-            GlanceTheme { SingleWidgetContent(preset) }
+            GlanceTheme(colors = MelaWidgetColors) { SingleWidgetContent(preset) }
         }
     }
 }
 
-/** A single shortcut in the same pastel-tile language as the grid widget. */
+/** One shortcut as a Material 3 tonal card. */
 @Composable
 private fun SingleWidgetContent(preset: Preset?) {
-    if (preset == null) {
-        Row(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(ImageProvider(R.drawable.widget_tile_empty_bg))
-                .padding(14.dp)
-                .clickable(routeAction("home")),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconCircle(R.drawable.widget_circle_empty, R.drawable.ic_w_add, 44.dp, 26.dp)
-            Spacer(GlanceModifier.width(12.dp))
-            Column {
-                Text(
-                    text = "Shortcut removed",
-                    style = TextStyle(
-                        color = ColorProvider(R.color.widget_text_primary),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    maxLines = 1,
-                )
-                Text(
-                    text = "Tap to open the app",
-                    style = TextStyle(color = ColorProvider(R.color.widget_text_secondary), fontSize = 12.sp),
-                    maxLines = 1,
-                )
-            }
-        }
-        return
-    }
-    val kind = tileKindFor(preset)
-    Column(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(ImageProvider(kind.tile))
-            .padding(14.dp)
-            .clickable(runAction(preset.id)),
-        verticalAlignment = Alignment.CenterVertically,
+    val c = GlanceTheme.colors
+    val kind = preset?.let(::tileKindFor)
+    val colors = kind?.colors() ?: TileColors(c.surfaceVariant, c.onSurfaceVariant, c.outline, c.surface)
+    val icon = kind?.icon ?: R.drawable.ic_w_add
+    val action = if (preset == null) routeAction("home") else runAction(preset.id)
+
+    Scaffold(
+        backgroundColor = colors.container,
+        horizontalPadding = 14.dp,
     ) {
         Row(
-            modifier = GlanceModifier.fillMaxWidth(),
+            modifier = GlanceModifier.fillMaxSize().clickable(action),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconCircle(kind.circle, kind.icon, 44.dp, 26.dp)
+            IconCircle(icon, 44.dp, colors.accent, colors.onAccent)
             Spacer(GlanceModifier.width(12.dp))
-            Column {
+            Column(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = preset.name,
+                    text = preset?.name ?: "Shortcut removed",
                     style = TextStyle(
-                        color = ColorProvider(R.color.widget_text_primary),
+                        color = colors.onContainer,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                     ),
@@ -109,8 +76,8 @@ private fun SingleWidgetContent(preset: Preset?) {
                 )
                 Spacer(GlanceModifier.height(2.dp))
                 Text(
-                    text = preset.ussdCode,
-                    style = TextStyle(color = ColorProvider(R.color.widget_text_secondary), fontSize = 13.sp),
+                    text = preset?.ussdCode ?: "Tap to open the app",
+                    style = TextStyle(color = colors.onContainer, fontSize = 13.sp),
                     maxLines = 1,
                 )
             }

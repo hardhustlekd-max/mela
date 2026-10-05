@@ -15,7 +15,7 @@ val Paper = Color(0xFFF4F1EA)
 val Ink = Color(0xFF10211F)
 val Night = Color(0xFF0B1413)
 
-private val LightColors = lightColorScheme(
+internal val LightColors = lightColorScheme(
     primary = Teal,
     onPrimary = Color.White,
     primaryContainer = Color(0xFFD4EFEB),
@@ -25,6 +25,9 @@ private val LightColors = lightColorScheme(
     secondaryContainer = Color(0xFFF6E2C4),
     onSecondaryContainer = Color(0xFF3D2A0A),
     tertiary = Color(0xFF3F5F7A),
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFD6E6F3),
+    onTertiaryContainer = Color(0xFF14293A),
     background = Paper,
     onBackground = Ink,
     surface = Color(0xFFFBF8F2),
@@ -33,9 +36,12 @@ private val LightColors = lightColorScheme(
     onSurfaceVariant = Color(0xFF3E4A48),
     outline = Color(0xFF6E7A77),
     error = Color(0xFFBA1A1A),
+    onError = Color.White,
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF410002),
 )
 
-private val DarkColors = darkColorScheme(
+internal val DarkColors = darkColorScheme(
     primary = TealLight,
     onPrimary = Color(0xFF003733),
     primaryContainer = Color(0xFF0C524D),
@@ -45,6 +51,9 @@ private val DarkColors = darkColorScheme(
     secondaryContainer = Color(0xFF5C3F12),
     onSecondaryContainer = Color(0xFFF8E4C6),
     tertiary = Color(0xFFA8C5DE),
+    onTertiary = Color(0xFF0F2A3D),
+    tertiaryContainer = Color(0xFF2B4A63),
+    onTertiaryContainer = Color(0xFFD3E6F7),
     background = Night,
     onBackground = Color(0xFFE4E7E5),
     surface = Color(0xFF121C1B),
@@ -53,6 +62,9 @@ private val DarkColors = darkColorScheme(
     onSurfaceVariant = Color(0xFFBFC9C6),
     outline = Color(0xFF899390),
     error = Color(0xFFFFB4AB),
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
 )
 
 @Composable

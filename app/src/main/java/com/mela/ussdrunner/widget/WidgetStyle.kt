@@ -6,40 +6,69 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.Action
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.components.TitleBar
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
-import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.material3.ColorProviders
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.mela.ussdrunner.R
 import com.mela.ussdrunner.domain.model.Preset
+import com.mela.ussdrunner.ui.theme.DarkColors
+import com.mela.ussdrunner.ui.theme.LightColors
 
-/** The six tile looks used by the widgets: pastel tile, strong circle, white glyph. */
-internal enum class TileKind(val tile: Int, val circle: Int, val icon: Int) {
-    BALANCE(R.drawable.widget_tile_balance_bg, R.drawable.widget_circle_balance, R.drawable.ic_w_balance),
-    DATA(R.drawable.widget_tile_data_bg, R.drawable.widget_circle_data, R.drawable.ic_w_data),
-    STATEMENT(R.drawable.widget_tile_statement_bg, R.drawable.widget_circle_statement, R.drawable.ic_w_statement),
-    TOPUP(R.drawable.widget_tile_topup_bg, R.drawable.widget_circle_topup, R.drawable.ic_w_topup),
-    HUB(R.drawable.widget_tile_hub_bg, R.drawable.widget_circle_hub, R.drawable.ic_w_hub),
-    CALL(R.drawable.widget_tile_call_bg, R.drawable.widget_circle_call, R.drawable.ic_w_call),
+/** The app's own Material 3 light/dark schemes, so widgets match the app. */
+internal val MelaWidgetColors = ColorProviders(light = LightColors, dark = DarkColors)
+
+/** Icon + Material 3 colour roles for one kind of shortcut. */
+internal enum class TileKind(val icon: Int) {
+    BALANCE(R.drawable.ic_w_balance),
+    DATA(R.drawable.ic_w_data),
+    STATEMENT(R.drawable.ic_w_statement),
+    TOPUP(R.drawable.ic_w_topup),
+    HUB(R.drawable.ic_w_hub),
+    CALL(R.drawable.ic_w_call),
 }
 
-/** Picks icon and colour from the preset's name/category, falling back to a stable hash of its id. */
+internal class TileColors(
+    val container: ColorProvider,
+    val onContainer: ColorProvider,
+    val accent: ColorProvider,
+    val onAccent: ColorProvider,
+)
+
+@Composable
+internal fun TileKind.colors(): TileColors {
+    val c = GlanceTheme.colors
+    return when (this) {
+        TileKind.BALANCE -> TileColors(c.primaryContainer, c.onPrimaryContainer, c.primary, c.onPrimary)
+        TileKind.DATA -> TileColors(c.secondaryContainer, c.onSecondaryContainer, c.secondary, c.onSecondary)
+        TileKind.STATEMENT -> TileColors(c.tertiaryContainer, c.onTertiaryContainer, c.tertiary, c.onTertiary)
+        TileKind.TOPUP -> TileColors(c.surfaceVariant, c.onSurfaceVariant, c.primary, c.onPrimary)
+        TileKind.HUB -> TileColors(c.surfaceVariant, c.onSurfaceVariant, c.secondary, c.onSecondary)
+        TileKind.CALL -> TileColors(c.errorContainer, c.onErrorContainer, c.error, c.onError)
+    }
+}
+
+/** Picks icon and colours from the preset's name/category, falling back to a stable hash of its id. */
 internal fun tileKindFor(preset: Preset): TileKind {
     val text = "${preset.name} ${preset.category.orEmpty()}".lowercase()
     return when {
@@ -66,124 +95,97 @@ internal fun routeAction(route: String): Action =
 
 @Composable
 internal fun IconCircle(
-    circle: Int,
     icon: Int,
     size: Dp,
-    glyph: Dp,
+    background: ColorProvider,
+    tint: ColorProvider,
 ) {
     Box(
-        modifier = GlanceModifier.size(size).background(ImageProvider(circle)),
+        modifier = GlanceModifier.size(size).background(background).cornerRadius(size / 2),
         contentAlignment = Alignment.Center,
     ) {
         Image(
             provider = ImageProvider(icon),
             contentDescription = null,
-            modifier = GlanceModifier.size(glyph),
+            colorFilter = ColorFilter.tint(tint),
+            modifier = GlanceModifier.size(size * 0.58f),
         )
     }
 }
 
 @Composable
-internal fun HeaderButton(icon: Int, description: String, action: Action) {
+private fun HeaderButton(icon: Int, description: String, action: Action) {
     Box(
-        modifier = GlanceModifier.size(36.dp).clickable(action),
+        modifier = GlanceModifier.size(40.dp).clickable(action),
         contentAlignment = Alignment.Center,
     ) {
         Image(
             provider = ImageProvider(icon),
             contentDescription = description,
-            colorFilter = ColorFilter.tint(ColorProvider(R.color.widget_icon_button)),
-            modifier = GlanceModifier.size(24.dp),
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface),
+            modifier = GlanceModifier.size(22.dp),
         )
     }
 }
 
-/** App logo + "USSD SHORTCUTS" + gear and plus buttons, as in the reference design. */
+/** Material 3 Glance title bar: app glyph, title, and settings / add actions. */
 @Composable
-internal fun WidgetHeader() {
-    Row(
-        modifier = GlanceModifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = GlanceModifier.size(28.dp).background(ImageProvider(R.drawable.widget_logo_bg)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(
-                provider = ImageProvider(R.drawable.ic_w_logo),
-                contentDescription = null,
-                modifier = GlanceModifier.size(18.dp),
-            )
-        }
-        Spacer(GlanceModifier.width(10.dp))
-        Text(
-            text = "USSD SHORTCUTS",
-            style = TextStyle(
-                color = ColorProvider(R.color.widget_text_primary),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-            ),
-            maxLines = 1,
-            modifier = GlanceModifier.defaultWeight(),
-        )
-        HeaderButton(R.drawable.ic_w_settings, "Settings", routeAction("settings"))
-        HeaderButton(R.drawable.ic_w_add, "Add shortcut", routeAction("edit"))
-    }
+internal fun WidgetTitleBar() {
+    TitleBar(
+        startIcon = ImageProvider(R.drawable.ic_w_logo),
+        title = "USSD Shortcuts",
+        iconColor = GlanceTheme.colors.primary,
+        textColor = GlanceTheme.colors.onSurface,
+        actions = {
+            HeaderButton(R.drawable.ic_w_settings, "Settings", routeAction("settings"))
+            HeaderButton(R.drawable.ic_w_add, "Add shortcut", routeAction("edit"))
+        },
+    )
 }
 
-/** One pastel tile: coloured icon circle on the left, name and USSD code on the right. */
+/**
+ * One tonal tile: accent icon circle, then name and USSD code.
+ * [compact] drops the code line and shrinks the icon for short widgets.
+ */
 @Composable
-internal fun ShortcutTile(preset: Preset?, modifier: GlanceModifier) {
-    if (preset == null) {
-        Row(
-            modifier = modifier
-                .background(ImageProvider(R.drawable.widget_tile_empty_bg))
-                .padding(horizontal = 10.dp)
-                .clickable(routeAction("edit")),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconCircle(R.drawable.widget_circle_empty, R.drawable.ic_w_add, 34.dp, 20.dp)
-            Spacer(GlanceModifier.width(10.dp))
-            Text(
-                text = "Add shortcut",
-                style = TextStyle(
-                    color = ColorProvider(R.color.widget_text_secondary),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                ),
-                maxLines = 1,
-            )
-        }
-        return
+internal fun ShortcutTile(preset: Preset?, modifier: GlanceModifier, compact: Boolean) {
+    val c = GlanceTheme.colors
+    val colors = if (preset == null) {
+        TileColors(c.surfaceVariant, c.onSurfaceVariant, c.outline, c.surface)
+    } else {
+        tileKindFor(preset).colors()
     }
-    val kind = tileKindFor(preset)
+    val icon = if (preset == null) R.drawable.ic_w_add else tileKindFor(preset).icon
+    val action = if (preset == null) routeAction("edit") else runAction(preset.id)
+    val iconSize = if (compact) 28.dp else 36.dp
+
     Row(
         modifier = modifier
-            .background(ImageProvider(kind.tile))
-            .padding(horizontal = 10.dp)
-            .clickable(runAction(preset.id)),
+            .background(colors.container)
+            .cornerRadius(18.dp)
+            .padding(horizontal = 8.dp)
+            .clickable(action),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconCircle(kind.circle, kind.icon, 34.dp, 20.dp)
-        Spacer(GlanceModifier.width(10.dp))
-        Column {
+        IconCircle(icon, iconSize, colors.accent, colors.onAccent)
+        Spacer(GlanceModifier.width(8.dp))
+        Column(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = preset.name,
+                text = preset?.name ?: "Add shortcut",
                 style = TextStyle(
-                    color = ColorProvider(R.color.widget_text_primary),
-                    fontSize = 13.sp,
+                    color = colors.onContainer,
+                    fontSize = if (compact) 12.sp else 13.sp,
                     fontWeight = FontWeight.Bold,
                 ),
                 maxLines = 1,
             )
-            Text(
-                text = preset.ussdCode,
-                style = TextStyle(
-                    color = ColorProvider(R.color.widget_text_secondary),
-                    fontSize = 12.sp,
-                ),
-                maxLines = 1,
-            )
+            if (!compact) {
+                Text(
+                    text = preset?.ussdCode ?: "Tap to create",
+                    style = TextStyle(color = colors.onContainer, fontSize = 11.sp),
+                    maxLines = 1,
+                )
+            }
         }
     }
 }
