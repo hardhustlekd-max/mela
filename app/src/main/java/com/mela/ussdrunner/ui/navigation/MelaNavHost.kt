@@ -1,6 +1,11 @@
 package com.mela.ussdrunner.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,8 +18,15 @@ import com.mela.ussdrunner.ui.screens.home.HomeScreen
 import com.mela.ussdrunner.ui.screens.settings.SettingsScreen
 
 @Composable
-fun MelaNavHost(startDestination: String = "home") {
+fun MelaNavHost(startDestination: String = "home", initialRoute: String? = null) {
     val nav = rememberNavController()
+    var routeHandled by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(initialRoute) {
+        if (!routeHandled && !initialRoute.isNullOrBlank() && initialRoute != startDestination) {
+            routeHandled = true
+            nav.navigate(initialRoute)
+        }
+    }
     NavHost(navController = nav, startDestination = startDestination) {
         composable("home") {
             HomeScreen(

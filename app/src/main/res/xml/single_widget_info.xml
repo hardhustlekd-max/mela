@@ -10,5 +10,5 @@
     android:initialLayout="@layout/widget_loading"
     android:configure="com.mela.ussdrunner.widget.SingleWidgetConfigActivity"
     android:widgetFeatures="reconfigurable"
-    android:previewLayout="@layout/widget_loading"
+    android:previewLayout="@layout/widget_preview_single"
     android:description="@string/widget_single_description" />

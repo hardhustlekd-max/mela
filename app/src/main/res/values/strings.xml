@@ -3,5 +3,5 @@
     <string name="widget_single_label">USSD shortcut</string>
     <string name="widget_single_description">Run one saved USSD preset from the home screen</string>
     <string name="widget_grid_label">USSD shortcut grid</string>
-    <string name="widget_grid_description">Four USSD shortcuts in a compact grid</string>
+    <string name="widget_grid_description">Six USSD shortcuts in colourful tiles, with quick access to settings and add</string>
 </resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_card">#F01F2528</color>
+    <color name="widget_text_primary">#F1F5F9</color>
+    <color name="widget_text_secondary">#A9B4BF</color>
+    <color name="widget_icon_button">#D9E2EC</color>
+    <color name="widget_logo">#2DBE8A</color>
+    <color name="widget_tile_empty">#2C353A</color>
+    <color name="widget_accent_empty">#6B7780</color>
+    <color name="widget_tile_balance">#1F3A2A</color>
+    <color name="widget_tile_data">#1E3048</color>
+    <color name="widget_tile_statement">#45331E</color>
+    <color name="widget_tile_topup">#35264A</color>
+    <color name="widget_tile_hub">#1B3C3A</color>
+    <color name="widget_tile_call">#482526</color>
+</resources>

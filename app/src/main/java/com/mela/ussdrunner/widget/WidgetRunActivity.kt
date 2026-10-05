@@ -13,9 +13,10 @@ class WidgetRunActivity : ComponentActivity() {
         enableEdgeToEdge()
         val presetId = intent.getStringExtra(WidgetKeys.presetIdParam.name)
             ?: intent.getStringExtra("preset_id")
+        val route = intent.getStringExtra(WidgetKeys.routeParam.name)
         val app = application as MelaApplication
         setContent {
-            MelaRoot(app.container, presetId)
+            MelaRoot(app.container, presetId, route)
         }
     }
 }

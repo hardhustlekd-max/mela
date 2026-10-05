@@ -88,22 +88,16 @@ class GridWidgetConfigActivity : ComponentActivity() {
         setContent {
             MelaTheme {
                 WidgetPickerScreen(
-                    title = "Choose up to 4 shortcuts",
+                    title = "Choose up to 6 shortcuts",
                     presets = app.container.presetRepository.observeAll(),
-                    maxSelection = 4,
+                    maxSelection = WidgetKeys.gridSlots.size,
                     onConfirm = { selected ->
                         bindWidget(
                             activity = this@GridWidgetConfigActivity,
                             appWidgetId = appWidgetId,
                             widget = GridPresetWidget(),
                         ) { prefs ->
-                            val keys = listOf(
-                                WidgetKeys.presetId0,
-                                WidgetKeys.presetId1,
-                                WidgetKeys.presetId2,
-                                WidgetKeys.presetId3,
-                            )
-                            keys.forEachIndexed { index, key ->
+                            WidgetKeys.gridSlots.forEachIndexed { index, key ->
                                 val id = selected.getOrNull(index)?.id
                                 if (id.isNullOrBlank()) prefs.remove(key) else prefs[key] = id
                             }

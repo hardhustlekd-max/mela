@@ -11,8 +11,14 @@ object WidgetKeys {
     val presetId1 = stringPreferencesKey("preset_id_1")
     val presetId2 = stringPreferencesKey("preset_id_2")
     val presetId3 = stringPreferencesKey("preset_id_3")
+    val presetId4 = stringPreferencesKey("preset_id_4")
+    val presetId5 = stringPreferencesKey("preset_id_5")
+
+    /** Grid widget slots in reading order (2 columns x 3 rows). */
+    val gridSlots = listOf(presetId0, presetId1, presetId2, presetId3, presetId4, presetId5)
 
     val presetIdParam = ActionParameters.Key<String>("preset_id")
+    val routeParam = ActionParameters.Key<String>("route")
 }
 
 class WidgetUpdater(private val context: Context) {

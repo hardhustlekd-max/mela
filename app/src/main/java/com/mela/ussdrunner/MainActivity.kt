@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MelaRoot(container: AppContainer, startPresetId: String?) {
+fun MelaRoot(container: AppContainer, startPresetId: String?, startRoute: String? = null) {
     val settings by container.settingsRepository.settings.collectAsState(
         initial = com.mela.ussdrunner.domain.model.AppSettings(),
     )
@@ -44,7 +44,7 @@ fun MelaRoot(container: AppContainer, startPresetId: String?) {
             val start = remember(startPresetId) {
                 if (startPresetId.isNullOrBlank()) "home" else "run/$startPresetId"
             }
-            MelaNavHost(startDestination = start)
+            MelaNavHost(startDestination = start, initialRoute = startRoute)
         }
     }
 }
