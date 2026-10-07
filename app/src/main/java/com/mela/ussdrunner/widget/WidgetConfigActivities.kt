@@ -31,15 +31,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.MutablePreferences
-import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mela.ussdrunner.MelaApplication
 import com.mela.ussdrunner.domain.model.Preset
 import com.mela.ussdrunner.ui.theme.MelaTheme
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SingleWidgetConfigActivity : ComponentActivity() {
@@ -60,13 +57,15 @@ class SingleWidgetConfigActivity : ComponentActivity() {
                     presets = app.container.presetRepository.observeAll(),
                     maxSelection = 1,
                     onConfirm = { selected ->
-                        bindWidget(
-                            activity = this@SingleWidgetConfigActivity,
-                            appWidgetId = appWidgetId,
-                            widget = SinglePresetWidget(),
-                        ) { prefs ->
-                            prefs[WidgetKeys.presetId] = selected.first().id
-                        }
+                        WidgetKeys.saveSingleId(this, appWidgetId, selected.first().id)
+                        val presets = app.container.presetRepository.observeAll().first()
+                        SingleWidgetRenderer.render(
+                            this,
+                            AppWidgetManager.getInstance(this),
+                            appWidgetId,
+                            presets,
+                        )
+                        finishConfigured(appWidgetId)
                     },
                 )
             }
@@ -90,18 +89,17 @@ class GridWidgetConfigActivity : ComponentActivity() {
                 WidgetPickerScreen(
                     title = "Choose up to 6 shortcuts",
                     presets = app.container.presetRepository.observeAll(),
-                    maxSelection = WidgetKeys.gridSlots.size,
+                    maxSelection = 6,
                     onConfirm = { selected ->
-                        bindWidget(
-                            activity = this@GridWidgetConfigActivity,
-                            appWidgetId = appWidgetId,
-                            widget = GridPresetWidget(),
-                        ) { prefs ->
-                            WidgetKeys.gridSlots.forEachIndexed { index, key ->
-                                val id = selected.getOrNull(index)?.id
-                                if (id.isNullOrBlank()) prefs.remove(key) else prefs[key] = id
-                            }
-                        }
+                        WidgetKeys.saveGridIds(this, appWidgetId, selected.map { it.id })
+                        val presets = app.container.presetRepository.observeAll().first()
+                        GridWidgetRenderer.render(
+                            this,
+                            AppWidgetManager.getInstance(this),
+                            appWidgetId,
+                            presets,
+                        )
+                        finishConfigured(appWidgetId)
                     },
                 )
             }
@@ -112,19 +110,10 @@ class GridWidgetConfigActivity : ComponentActivity() {
 private fun Intent.appWidgetId(): Int =
     getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
 
-private suspend fun bindWidget(
-    activity: ComponentActivity,
-    appWidgetId: Int,
-    widget: GlanceAppWidget,
-    write: (MutablePreferences) -> Unit,
-) {
-    val manager = GlanceAppWidgetManager(activity)
-    val glanceId = manager.getGlanceIdBy(appWidgetId)
-    updateAppWidgetState(activity, glanceId, write)
-    widget.update(activity, glanceId)
+private fun ComponentActivity.finishConfigured(appWidgetId: Int) {
     val result = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-    activity.setResult(Activity.RESULT_OK, result)
-    activity.finish()
+    setResult(Activity.RESULT_OK, result)
+    finish()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

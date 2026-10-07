@@ -39,30 +39,42 @@ object SamplePresets {
 
     val samples = listOf(
         Sample(
-            name = "Example Data",
-            code = "*999*1*2#",
-            description = "Example — verify with your carrier",
-            category = "Data",
-            favorite = true,
-        ),
-        Sample(
-            name = "Example Balance",
-            code = "*804#",
+            name = "Check Balance",
+            code = "*100#",
             description = "Example — verify with your carrier",
             category = "Balance",
             favorite = true,
         ),
         Sample(
-            name = "Example Voice Package",
-            code = "*999*2*1#",
+            name = "Buy Data",
+            code = "*141*1#",
             description = "Example — verify with your carrier",
-            category = "Voice",
+            category = "Data",
+            favorite = true,
         ),
         Sample(
-            name = "Example Mobile Money",
-            code = "*127#",
+            name = "Mini Statement",
+            code = "*222#",
             description = "Example — verify with your carrier",
-            category = "Mobile Money",
+            category = "Balance",
+        ),
+        Sample(
+            name = "Airtime Top-up",
+            code = "*101#",
+            description = "Example — verify with your carrier",
+            category = "Airtime",
+        ),
+        Sample(
+            name = "Data Balance",
+            code = "*100*2#",
+            description = "Example — verify with your carrier",
+            category = "Data",
+        ),
+        Sample(
+            name = "Call Me Back",
+            code = "*140#",
+            description = "Example — verify with your carrier",
+            category = "Voice",
         ),
     )
 }

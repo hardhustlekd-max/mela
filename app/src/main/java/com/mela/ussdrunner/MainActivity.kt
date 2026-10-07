@@ -23,28 +23,38 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val startPreset = intent.getStringExtra(EXTRA_PRESET_ID)
+        val openEditor = intent.getBooleanExtra(EXTRA_OPEN_EDITOR, false)
         setContent {
             val app = application as MelaApplication
-            MelaRoot(app.container, startPreset)
+            MelaRoot(app.container, startPreset, openEditor)
         }
     }
 
     companion object {
         const val EXTRA_PRESET_ID = "preset_id"
+        const val EXTRA_OPEN_EDITOR = "open_editor"
     }
 }
 
 @Composable
-fun MelaRoot(container: AppContainer, startPresetId: String?, startRoute: String? = null) {
+fun MelaRoot(
+    container: AppContainer,
+    startPresetId: String?,
+    openEditor: Boolean = false,
+) {
     val settings by container.settingsRepository.settings.collectAsState(
         initial = com.mela.ussdrunner.domain.model.AppSettings(),
     )
     CompositionLocalProvider(LocalAppContainer provides container) {
         MelaTheme(themeMode = settings.themeMode) {
-            val start = remember(startPresetId) {
-                if (startPresetId.isNullOrBlank()) "home" else "run/$startPresetId"
+            val start = remember(startPresetId, openEditor) {
+                when {
+                    !startPresetId.isNullOrBlank() -> "run/$startPresetId"
+                    openEditor -> "edit?id="
+                    else -> "home"
+                }
             }
-            MelaNavHost(startDestination = start, initialRoute = startRoute)
+            MelaNavHost(startDestination = start)
         }
     }
 }

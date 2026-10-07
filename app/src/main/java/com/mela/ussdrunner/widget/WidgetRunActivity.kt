@@ -11,12 +11,11 @@ class WidgetRunActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val presetId = intent.getStringExtra(WidgetKeys.presetIdParam.name)
+        val presetId = intent.getStringExtra(WidgetKeys.PRESET_ID_EXTRA)
             ?: intent.getStringExtra("preset_id")
-        val route = intent.getStringExtra(WidgetKeys.routeParam.name)
         val app = application as MelaApplication
         setContent {
-            MelaRoot(app.container, presetId, route)
+            MelaRoot(app.container, presetId)
         }
     }
 }

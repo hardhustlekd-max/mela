@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -22,36 +20,11 @@ android {
     }
 
     signingConfigs {
-        val keystoreFile = System.getenv("KEYSTORE_FILE")
-        val storePasswordEnv = System.getenv("KEYSTORE_PASSWORD")
-        val keyAliasEnv = System.getenv("KEY_ALIAS")
-        val keyPasswordEnv = System.getenv("KEY_PASSWORD")
-        val localPropsFile = rootProject.file("keystore.properties")
-        val localProps = Properties()
-        if (localPropsFile.exists()) {
-            localPropsFile.inputStream().use { localProps.load(it) }
-        }
-
-        val resolvedStore = keystoreFile
-            ?: localProps.getProperty("storeFile")
-        val resolvedStorePassword = storePasswordEnv
-            ?: localProps.getProperty("storePassword")
-        val resolvedAlias = keyAliasEnv
-            ?: localProps.getProperty("keyAlias")
-        val resolvedKeyPassword = keyPasswordEnv
-            ?: localProps.getProperty("keyPassword")
-            ?: resolvedStorePassword
-
-        if (!resolvedStore.isNullOrBlank() &&
-            !resolvedStorePassword.isNullOrBlank() &&
-            !resolvedAlias.isNullOrBlank()
-        ) {
-            create("release") {
-                storeFile = file(resolvedStore)
-                storePassword = resolvedStorePassword
-                keyAlias = resolvedAlias
-                keyPassword = resolvedKeyPassword
-            }
+        create("release") {
+            storeFile = file("release.jks")
+            storePassword = "mela-ussd-runner"
+            keyAlias = "mela"
+            keyPassword = "mela-ussd-runner"
         }
     }
 
@@ -64,9 +37,7 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            if (signingConfigs.findByName("release") != null) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -96,6 +67,10 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = false
+        unitTests.all {
+            it.maxParallelForks = 1
+            it.maxHeapSize = "512m"
+        }
     }
 }
 
@@ -122,9 +97,6 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     implementation("androidx.datastore:datastore-preferences:1.1.1")
-
-    implementation("androidx.glance:glance-appwidget:1.1.1")
-    implementation("androidx.glance:glance-material3:1.1.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
