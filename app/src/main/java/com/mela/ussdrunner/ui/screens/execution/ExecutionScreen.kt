@@ -1,6 +1,7 @@
 package com.mela.ussdrunner.ui.screens.execution
 
 import android.app.Application
+import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +54,13 @@ fun ExecutionScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { vm.onPermissionsUpdated() }
+
+    LaunchedEffect(state.phase) {
+        if (state.phase is RunPhase.Dialer) {
+            onClose()
+            (context as? Activity)?.moveTaskToBack(true)
+        }
+    }
 
     Scaffold { padding ->
         Column(
@@ -118,54 +127,18 @@ fun ExecutionScreen(
                         Text("Cancel")
                     }
                 }
-                is RunPhase.Success -> {
-                    Text("USSD response", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        phase.body.ifBlank { "(Empty response from the network)" },
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Start,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Button(onClick = onClose, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                        Text("Close")
-                    }
-                }
                 is RunPhase.Dialer -> {
-                    Text("Opened the system USSD interface", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        phase.reason,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Button(onClick = onClose, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                        Text("Close")
-                    }
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(16.dp))
+                    Text("Opening the system USSD dialog…", textAlign = TextAlign.Center)
                 }
                 is RunPhase.Error -> {
                     Text(phase.title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(12.dp))
-                    if (phase.canFallback) {
-                        Text(
-                            "Check that:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
                     phase.hints.forEach { hint ->
                         Text("• $hint", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.fillMaxWidth())
                     }
                     Spacer(Modifier.height(20.dp))
-                    if (phase.canFallback) {
-                        Button(onClick = vm::fallback, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                            Text("Use dialer fallback")
-                        }
-                        Spacer(Modifier.height(8.dp))
-                    }
                     OutlinedButton(onClick = vm::start, modifier = Modifier.fillMaxWidth().height(48.dp)) {
                         Text("Try again")
                     }

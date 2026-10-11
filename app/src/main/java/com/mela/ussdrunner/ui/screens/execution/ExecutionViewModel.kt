@@ -21,9 +21,8 @@ sealed interface RunPhase {
     data object Loading : RunPhase
     data object NeedPermission : RunPhase
     data object Connecting : RunPhase
-    data class Success(val body: String) : RunPhase
     data class Dialer(val reason: String) : RunPhase
-    data class Error(val title: String, val hints: List<String>, val canFallback: Boolean) : RunPhase
+    data class Error(val title: String, val hints: List<String>) : RunPhase
     data object Missing : RunPhase
 }
 
@@ -79,22 +78,6 @@ class ExecutionViewModel(
                 code = preset.ussdCode,
                 preference = preset.simPreference,
                 settingsDefault = prefs.defaultSim,
-                preferNative = true,
-            )
-            applyResult(result)
-        }
-    }
-
-    fun fallback() {
-        val preset = _state.value.preset ?: return
-        viewModelScope.launch {
-            _state.update { it.copy(phase = RunPhase.Connecting) }
-            val prefs = settings.current()
-            val result = executor.execute(
-                code = preset.ussdCode,
-                preference = preset.simPreference,
-                settingsDefault = prefs.defaultSim,
-                preferNative = false,
             )
             applyResult(result)
         }
@@ -102,11 +85,6 @@ class ExecutionViewModel(
 
     private suspend fun applyResult(result: UssdResult) {
         when (result) {
-            is UssdResult.Response -> {
-                presets.markUsed(presetId)
-                widgets.refreshAll()
-                _state.update { it.copy(phase = RunPhase.Success(result.body)) }
-            }
             is UssdResult.DialerLaunched -> {
                 presets.markUsed(presetId)
                 widgets.refreshAll()
@@ -114,7 +92,7 @@ class ExecutionViewModel(
             }
             is UssdResult.Failure -> {
                 _state.update {
-                    it.copy(phase = RunPhase.Error(result.title, result.hints, result.canFallback))
+                    it.copy(phase = RunPhase.Error(result.title, result.hints))
                 }
             }
         }

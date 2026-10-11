@@ -61,7 +61,7 @@ fun HelpScreen(page: String, onBack: () -> Unit) {
 private fun HelpBody() {
     Paragraph("Mela USSD Runner saves your carrier codes on this phone and sends them through Android telephony.")
     Heading("Running a code")
-    Paragraph("Tap RUN on a preset. When the device supports it, Mela uses TelephonyManager.sendUssdRequest() and shows the reply. If the manufacturer or carrier blocks that API, Mela opens the system dialer instead — Android then shows the usual USSD dialog, which this app cannot read.")
+    Paragraph("Tap RUN on a preset. Mela hands the code to Android with a phone call, so the usual system USSD dialog appears. The reply stays in that dialog and is not parsed inside Mela.")
     Heading("SIM cards")
     Paragraph("On dual-SIM phones you can pick Default, SIM 1, or SIM 2 per preset. Single-SIM phones hide that control. Slot names follow Android’s SIM order, which can differ by manufacturer.")
     Heading("Home screen widgets")
@@ -75,7 +75,7 @@ private fun AboutBody() {
     Heading("Mela USSD Runner")
     Paragraph("Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
     Paragraph("Offline USSD shortcuts for Android. Presets stay on this device. There is no account and no server.")
-    Paragraph("Minimum Android 8.0 (API 26). Native sendUssdRequest() is used when the OS exposes it; otherwise the encoded tel: dialer fallback is used.")
+    Paragraph("Minimum Android 8.0 (API 26). Codes are sent with the system phone UI so the device shows the carrier reply itself.")
 }
 
 @Composable

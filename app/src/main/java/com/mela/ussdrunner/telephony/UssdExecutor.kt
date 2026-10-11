@@ -4,20 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.telecom.TelecomManager
-import android.telephony.TelephonyManager
 import com.mela.ussdrunner.domain.UssdEncoder
 import com.mela.ussdrunner.domain.UssdValidator
 import com.mela.ussdrunner.domain.model.SimPreference
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.coroutines.resume
 
 sealed class UssdResult {
-    data class Response(val request: String, val body: String) : UssdResult()
     data class DialerLaunched(val request: String, val reason: String) : UssdResult()
     data class Failure(val title: String, val hints: List<String>, val canFallback: Boolean) : UssdResult()
 }
@@ -26,14 +18,15 @@ class UssdExecutor(
     private val context: Context,
     private val simManager: SimManager,
 ) {
-    fun nativeApiAvailable(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-
+    /**
+     * Places the code with [Intent.ACTION_CALL] so Android shows its own USSD dialog.
+     * The reply is not read or parsed inside this app.
+     */
     @SuppressLint("MissingPermission")
-    suspend fun execute(
+    fun execute(
         code: String,
         preference: SimPreference,
         settingsDefault: SimPreference,
-        preferNative: Boolean = true,
     ): UssdResult {
         val validation = UssdValidator.validate(code)
         if (validation is UssdValidator.ValidationResult.Invalid) {
@@ -56,7 +49,7 @@ class UssdExecutor(
             return UssdResult.Failure(
                 title = "Call permission is required.",
                 hints = listOf(
-                    "Allow phone calls so Mela can send the USSD code.",
+                    "Allow phone calls so Android can show the USSD dialog.",
                     "You can enable it in Android settings if the prompt was denied.",
                 ),
                 canFallback = false,
@@ -72,128 +65,12 @@ class UssdExecutor(
                     "Wait until the SIM is registered on the network.",
                     "If you use dual SIM, check that the selected slot is on.",
                 ),
-                canFallback = true,
+                canFallback = false,
             )
         }
 
         val subscriptionId = simManager.resolveSubscriptionId(preference, settingsDefault)
-
-        if (preferNative && nativeApiAvailable()) {
-            val native = sendNative(normalized, subscriptionId)
-            if (native != null) return native
-        }
-
         return launchDialer(normalized, subscriptionId)
-    }
-
-    @SuppressLint("MissingPermission")
-    private suspend fun sendNative(code: String, subscriptionId: Int?): UssdResult? {
-        val tm = try {
-            simManager.telephonyFor(subscriptionId)
-        } catch (t: Throwable) {
-            return UssdResult.Failure(
-                title = "Could not use the selected SIM.",
-                hints = listOf(
-                    t.localizedMessage ?: "The subscription is not available.",
-                    "Try Default SIM, or the other slot.",
-                ),
-                canFallback = true,
-            )
-        }
-
-        if (tm.simState != TelephonyManager.SIM_STATE_READY &&
-            tm.simState != TelephonyManager.SIM_STATE_UNKNOWN
-        ) {
-            return UssdResult.Failure(
-                title = "The selected SIM is not ready.",
-                hints = listOf(
-                    "Your SIM may be locked, missing, or still starting up.",
-                    "Check that the selected SIM is available.",
-                ),
-                canFallback = true,
-            )
-        }
-
-        val timed: UssdResult? = try {
-            withTimeoutOrNull(NATIVE_TIMEOUT_MS) {
-                suspendCancellableCoroutine<UssdResult> { cont ->
-                    val callback = object : TelephonyManager.UssdResponseCallback() {
-                        override fun onReceiveUssdResponse(
-                            telephonyManager: TelephonyManager,
-                            request: String,
-                            response: CharSequence,
-                        ) {
-                            if (cont.isActive) {
-                                cont.resume(UssdResult.Response(request, response.toString()))
-                            }
-                        }
-
-                        override fun onReceiveUssdResponseFailed(
-                            telephonyManager: TelephonyManager,
-                            request: String,
-                            failureCode: Int,
-                        ) {
-                            if (!cont.isActive) return
-                            val message = when (failureCode) {
-                                TelephonyManager.USSD_RETURN_FAILURE ->
-                                    "The carrier returned a USSD failure."
-                                TelephonyManager.USSD_ERROR_SERVICE_UNAVAIL ->
-                                    "USSD service is unavailable on this network."
-                                else -> "USSD request failed (code $failureCode)."
-                            }
-                            cont.resume(
-                                UssdResult.Failure(
-                                    title = message,
-                                    hints = commonHints(),
-                                    canFallback = true,
-                                ),
-                            )
-                        }
-                    }
-                    try {
-                        tm.sendUssdRequest(code, callback, Handler(Looper.getMainLooper()))
-                    } catch (t: SecurityException) {
-                        if (cont.isActive) {
-                            cont.resume(
-                                UssdResult.Failure(
-                                    title = "Android blocked the USSD request.",
-                                    hints = listOf(
-                                        t.localizedMessage ?: "Missing permission or policy restriction.",
-                                        "You can still try the system dialer fallback.",
-                                    ),
-                                    canFallback = true,
-                                ),
-                            )
-                        }
-                    } catch (t: Throwable) {
-                        if (cont.isActive) {
-                            cont.resume(
-                                UssdResult.Failure(
-                                    title = "Native USSD is not supported on this device.",
-                                    hints = listOf(
-                                        t.localizedMessage ?: "sendUssdRequest() could not be started.",
-                                        "Mela can open the system dialer instead.",
-                                    ),
-                                    canFallback = true,
-                                ),
-                            )
-                        }
-                    }
-                }
-            }
-        } catch (t: Throwable) {
-            UssdResult.Failure(
-                title = "USSD request could not be sent.",
-                hints = listOf(t.localizedMessage ?: "Unexpected error") + commonHints(),
-                canFallback = true,
-            )
-        }
-
-        return timed ?: UssdResult.Failure(
-            title = "USSD request timed out.",
-            hints = listOf("The network did not answer in time.") + commonHints(),
-            canFallback = true,
-        )
     }
 
     @SuppressLint("MissingPermission")
@@ -207,7 +84,7 @@ class UssdExecutor(
             context.startActivity(callIntent)
             UssdResult.DialerLaunched(
                 request = code,
-                reason = "Android opened the system call / USSD interface. The carrier dialog appears outside this app, so Mela cannot read the reply.",
+                reason = "Android is showing the system USSD dialog.",
             )
         } catch (_: SecurityException) {
             val dialIntent = Intent(Intent.ACTION_DIAL, uri).apply {
@@ -217,7 +94,7 @@ class UssdExecutor(
                 context.startActivity(dialIntent)
                 UssdResult.DialerLaunched(
                     request = code,
-                    reason = "Call permission was not granted, so the dialer was opened instead. Tap the call button to send the code.",
+                    reason = "Call permission was not granted, so the dialer was opened. Tap call to send the code. Android will show the reply.",
                 )
             } catch (t: Throwable) {
                 UssdResult.Failure(
@@ -230,7 +107,7 @@ class UssdExecutor(
             }
         } catch (t: Throwable) {
             UssdResult.Failure(
-                title = "Could not open the dialer.",
+                title = "Could not open the system USSD dialog.",
                 hints = listOf(t.localizedMessage ?: "Unknown error") + commonHints(),
                 canFallback = false,
             )
@@ -269,8 +146,4 @@ class UssdExecutor(
         "The USSD code is correct for your carrier",
         "The selected SIM is available",
     )
-
-    companion object {
-        const val NATIVE_TIMEOUT_MS = 25_000L
-    }
 }
