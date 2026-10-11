@@ -171,6 +171,19 @@ internal fun fillGridCells(saved: List<Preset?>, all: List<Preset>): List<Preset
     return List(6) { index -> fallback.getOrNull(index) }
 }
 
+/** Tap order becomes widget order. Deselect removes that shortcut and closes the gap. */
+internal fun toggleWidgetSelection(current: List<String>, id: String, max: Int): List<String> {
+    if (id in current) return current.filterNot { it == id }
+    if (max <= 1) return listOf(id)
+    if (current.size >= max) return current
+    return current + id
+}
+
+internal fun orderedWidgetPresets(chosenIds: List<String>, presets: List<Preset>, max: Int): List<Preset> {
+    val byId = presets.associateBy { it.id }
+    return chosenIds.mapNotNull { byId[it] }.distinctBy { it.id }.take(max)
+}
+
 internal object WidgetPalette {
     data class Style(val tile: Int, val badge: Int)
 

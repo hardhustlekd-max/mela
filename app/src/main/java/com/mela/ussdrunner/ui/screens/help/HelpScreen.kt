@@ -65,7 +65,7 @@ private fun HelpBody() {
     Heading("SIM cards")
     Paragraph("On dual-SIM phones you can pick Default, SIM 1, or SIM 2 per preset. Single-SIM phones hide that control. Slot names follow Android’s SIM order, which can differ by manufacturer.")
     Heading("Home screen widgets")
-    Paragraph("Long-press the home screen, choose Widgets, then Mela USSD Runner. The single widget runs one preset. The grid widget holds up to four shortcuts. If you rename, change, or delete a preset, widgets refresh on the next update.")
+    Paragraph("Long-press the home screen, choose Widgets, then Mela. The single widget runs one preset. The grid holds up to six. Tap the gear on the widget and select several shortcuts — the order you tap is how they appear, left to right. Renaming or deleting a preset updates the widget.")
     Heading("Device and carrier limits")
     Paragraph("USSD is a carrier feature. Some phones never return the reply to third-party apps. Some dual-SIM firmware ignores the selected slot. Tablets without telephony cannot send codes. Airplane mode, no SIM, a locked PIN, or no mobile network will all fail. Sample codes are examples only — confirm them with your operator.")
 }

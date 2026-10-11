@@ -49,4 +49,30 @@ class WidgetGridLogicTest {
         assertNull(saved[1])
         assertEquals("P1", saved[2]?.name)
     }
+
+    @Test
+    fun toggleKeepsTapOrderAndStopsAtSix() {
+        var ids = emptyList<String>()
+        ids = toggleWidgetSelection(ids, "b", max = 6)
+        ids = toggleWidgetSelection(ids, "a", max = 6)
+        ids = toggleWidgetSelection(ids, "c", max = 6)
+        assertEquals(listOf("b", "a", "c"), ids)
+
+        ids = toggleWidgetSelection(ids, "a", max = 6)
+        assertEquals(listOf("b", "c"), ids)
+
+        ids = listOf("1", "2", "3", "4", "5", "6")
+        assertEquals(ids, toggleWidgetSelection(ids, "7", max = 6))
+    }
+
+    @Test
+    fun orderedWidgetPresetsFollowsChosenIds() {
+        val all = listOf(
+            preset("1", "Data"),
+            preset("2", "Balance"),
+            preset("4", "Money"),
+        )
+        val ordered = orderedWidgetPresets(listOf("2", "1", "4", "9"), all, max = 6)
+        assertEquals(listOf("Balance", "Data", "Money"), ordered.map { it.name })
+    }
 }
