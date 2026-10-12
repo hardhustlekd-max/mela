@@ -51,7 +51,15 @@ class GridPresetWidgetReceiver : AppWidgetProvider() {
                 val app = context.applicationContext as MelaApplication
                 val presets = app.container.presetRepository.observeAll().first()
                 appWidgetIds.forEach { id ->
-                    GridWidgetRenderer.render(context, appWidgetManager, id, presets)
+                    try {
+                        GridWidgetRenderer.render(context, appWidgetManager, id, presets)
+                    } catch (_: Throwable) {
+                        GridWidgetRenderer.renderFallback(context, appWidgetManager, id)
+                    }
+                }
+            } catch (_: Throwable) {
+                appWidgetIds.forEach { id ->
+                    GridWidgetRenderer.renderFallback(context, appWidgetManager, id)
                 }
             } finally {
                 pending.finish()
@@ -83,9 +91,15 @@ internal object GridWidgetRenderer {
         appWidgetId: Int,
         presets: List<Preset>,
     ) {
-        val views = RemoteViews(context.packageName, R.layout.widget_grid)
+        val compact = isCompact(appWidgetManager, appWidgetId)
+        val count = if (compact) 4 else 6
+        val views = RemoteViews(
+            context.packageName,
+            if (compact) R.layout.widget_grid else R.layout.widget_grid_tall,
+        )
         val cells = WidgetKeys.resolveGrid(WidgetKeys.loadGridIds(context, appWidgetId), presets)
-        cells.forEachIndexed { index, preset ->
+        for (index in 0 until count) {
+            val preset = cells.getOrNull(index)
             val style = WidgetPalette.forIndex(index)
             views.setTextViewText(
                 nameIds[index],
@@ -112,6 +126,22 @@ internal object GridWidgetRenderer {
         views.setOnClickPendingIntent(
             R.id.widget_add,
             WidgetIntents.openEditor(context, requestCode = 2),
+        )
+        appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    /** 4×2 cells are about 110–150dp tall. Taller sizes get the six-shortcut layout. */
+    internal fun isCompact(appWidgetManager: AppWidgetManager, appWidgetId: Int): Boolean {
+        val height = appWidgetManager.getAppWidgetOptions(appWidgetId)
+            .getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+        return height <= 0 || height < 165
+    }
+
+    fun renderFallback(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+        val views = RemoteViews(context.packageName, R.layout.widget_loading)
+        views.setOnClickPendingIntent(
+            R.id.widget_loading_root,
+            WidgetIntents.configureGrid(context, appWidgetId, requestCode = 1),
         )
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
@@ -188,12 +218,12 @@ internal object WidgetPalette {
     data class Style(val tile: Int, val badge: Int)
 
     private val styles = listOf(
-        Style(R.drawable.widget_tile_green, R.drawable.widget_badge_balance),
-        Style(R.drawable.widget_tile_blue, R.drawable.widget_badge_data),
-        Style(R.drawable.widget_tile_orange, R.drawable.widget_badge_statement),
-        Style(R.drawable.widget_tile_purple, R.drawable.widget_badge_airtime),
-        Style(R.drawable.widget_tile_teal, R.drawable.widget_badge_data_balance),
-        Style(R.drawable.widget_tile_pink, R.drawable.widget_badge_callback),
+        Style(R.drawable.widget_tile_green, R.drawable.ic_widget_dollar),
+        Style(R.drawable.widget_tile_blue, R.drawable.ic_widget_wifi),
+        Style(R.drawable.widget_tile_orange, R.drawable.ic_widget_doc),
+        Style(R.drawable.widget_tile_purple, R.drawable.ic_widget_card),
+        Style(R.drawable.widget_tile_teal, R.drawable.ic_widget_close),
+        Style(R.drawable.widget_tile_pink, R.drawable.ic_widget_phone),
     )
 
     fun forIndex(index: Int): Style = styles[index.mod(styles.size)]
