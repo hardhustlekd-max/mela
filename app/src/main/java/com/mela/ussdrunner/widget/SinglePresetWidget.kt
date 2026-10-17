@@ -74,7 +74,11 @@ internal object SingleWidgetRenderer {
             R.id.widget_single_code,
             preset?.ussdCode ?: context.getString(R.string.widget_empty_code),
         )
-        views.setImageViewResource(R.id.widget_single_badge, style.badge)
+        views.setInt(R.id.widget_single_root, "setBackgroundResource", style.tile)
+        views.setImageViewBitmap(
+            R.id.widget_single_badge,
+            WidgetIcons.circled(context, style.badge, style.color),
+        )
         views.setOnClickPendingIntent(
             R.id.widget_single_root,
             if (preset == null) {

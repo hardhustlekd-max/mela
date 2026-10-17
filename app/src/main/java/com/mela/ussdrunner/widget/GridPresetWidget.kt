@@ -73,16 +73,13 @@ internal object GridWidgetRenderer {
         R.id.tile_0, R.id.tile_1, R.id.tile_2, R.id.tile_3, R.id.tile_4, R.id.tile_5,
     )
     private val nameIds = intArrayOf(
-        R.id.tile_0_name, R.id.tile_1_name, R.id.tile_2_name,
-        R.id.tile_3_name, R.id.tile_4_name, R.id.tile_5_name,
+        R.id.tile_0_name, R.id.tile_1_name, R.id.tile_2_name, R.id.tile_3_name,
     )
     private val codeIds = intArrayOf(
-        R.id.tile_0_code, R.id.tile_1_code, R.id.tile_2_code,
-        R.id.tile_3_code, R.id.tile_4_code, R.id.tile_5_code,
+        R.id.tile_0_code, R.id.tile_1_code, R.id.tile_2_code, R.id.tile_3_code,
     )
     private val badgeIds = intArrayOf(
-        R.id.tile_0_badge, R.id.tile_1_badge, R.id.tile_2_badge,
-        R.id.tile_3_badge, R.id.tile_4_badge, R.id.tile_5_badge,
+        R.id.tile_0_badge, R.id.tile_1_badge, R.id.tile_2_badge, R.id.tile_3_badge,
     )
 
     fun render(
@@ -91,14 +88,9 @@ internal object GridWidgetRenderer {
         appWidgetId: Int,
         presets: List<Preset>,
     ) {
-        val compact = isCompact(appWidgetManager, appWidgetId)
-        val count = if (compact) 4 else 6
-        val views = RemoteViews(
-            context.packageName,
-            if (compact) R.layout.widget_grid else R.layout.widget_grid_tall,
-        )
+        val views = RemoteViews(context.packageName, R.layout.widget_grid)
         val cells = WidgetKeys.resolveGrid(WidgetKeys.loadGridIds(context, appWidgetId), presets)
-        for (index in 0 until count) {
+        for (index in 0 until 4) {
             val preset = cells.getOrNull(index)
             val style = WidgetPalette.forIndex(index)
             views.setTextViewText(
@@ -109,7 +101,11 @@ internal object GridWidgetRenderer {
                 codeIds[index],
                 preset?.ussdCode ?: context.getString(R.string.widget_empty_code),
             )
-            views.setImageViewResource(badgeIds[index], style.badge)
+            views.setInt(tileIds[index], "setBackgroundResource", style.tile)
+            views.setImageViewBitmap(
+                badgeIds[index],
+                WidgetIcons.circled(context, style.badge, style.color),
+            )
             views.setOnClickPendingIntent(
                 tileIds[index],
                 if (preset == null) {
@@ -119,6 +115,14 @@ internal object GridWidgetRenderer {
                 },
             )
         }
+        views.setImageViewBitmap(
+            R.id.widget_settings,
+            WidgetIcons.plain(context, R.drawable.ic_widget_settings, 0xFF374151.toInt()),
+        )
+        views.setImageViewBitmap(
+            R.id.widget_add,
+            WidgetIcons.plain(context, R.drawable.ic_widget_add, 0xFF374151.toInt()),
+        )
         views.setOnClickPendingIntent(
             R.id.widget_settings,
             WidgetIntents.configureGrid(context, appWidgetId, requestCode = 1),
@@ -128,13 +132,6 @@ internal object GridWidgetRenderer {
             WidgetIntents.openEditor(context, requestCode = 2),
         )
         appWidgetManager.updateAppWidget(appWidgetId, views)
-    }
-
-    /** 4×2 cells are about 110–150dp tall. Taller sizes get the six-shortcut layout. */
-    internal fun isCompact(appWidgetManager: AppWidgetManager, appWidgetId: Int): Boolean {
-        val height = appWidgetManager.getAppWidgetOptions(appWidgetId)
-            .getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
-        return height <= 0 || height < 165
     }
 
     fun renderFallback(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
@@ -215,15 +212,15 @@ internal fun orderedWidgetPresets(chosenIds: List<String>, presets: List<Preset>
 }
 
 internal object WidgetPalette {
-    data class Style(val tile: Int, val badge: Int)
+    data class Style(val tile: Int, val badge: Int, val color: Int)
 
     private val styles = listOf(
-        Style(R.drawable.widget_tile_green, R.drawable.ic_widget_dollar),
-        Style(R.drawable.widget_tile_blue, R.drawable.ic_widget_wifi),
-        Style(R.drawable.widget_tile_orange, R.drawable.ic_widget_doc),
-        Style(R.drawable.widget_tile_purple, R.drawable.ic_widget_card),
-        Style(R.drawable.widget_tile_teal, R.drawable.ic_widget_close),
-        Style(R.drawable.widget_tile_pink, R.drawable.ic_widget_phone),
+        Style(R.drawable.widget_tile_green, R.drawable.ic_widget_dollar, 0xFF22C55E.toInt()),
+        Style(R.drawable.widget_tile_blue, R.drawable.ic_widget_wifi, 0xFF3B82F6.toInt()),
+        Style(R.drawable.widget_tile_orange, R.drawable.ic_widget_doc, 0xFFF97316.toInt()),
+        Style(R.drawable.widget_tile_purple, R.drawable.ic_widget_card, 0xFFA855F7.toInt()),
+        Style(R.drawable.widget_tile_teal, R.drawable.ic_widget_close, 0xFF14B8A6.toInt()),
+        Style(R.drawable.widget_tile_pink, R.drawable.ic_widget_phone, 0xFFEC4899.toInt()),
     )
 
     fun forIndex(index: Int): Style = styles[index.mod(styles.size)]

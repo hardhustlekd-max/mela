@@ -1,10 +1,10 @@
 <resources>
     <string name="app_name">Mela USSD Runner</string>
     <string name="widget_single_label">USSD shortcut</string>
-    <string name="widget_single_description">Run one saved USSD preset from the home screen</string>
+    <string name="widget_single_description">One USSD shortcut on a solid card that fills its space</string>
     <string name="widget_grid_label">USSD shortcuts</string>
     <string name="widget_grid_title">USSD shortcuts</string>
-    <string name="widget_grid_description">Four USSD shortcuts in a 4 by 2 home-screen grid. Stretch it taller for six.</string>
+    <string name="widget_grid_description">Four USSD shortcuts on a solid card that fills its space</string>
     <string name="widget_settings">Widget settings</string>
     <string name="widget_add">Add shortcut</string>
     <string name="widget_empty_name">Add shortcut</string>
